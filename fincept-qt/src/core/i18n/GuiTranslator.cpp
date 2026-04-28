@@ -320,7 +320,6 @@ bool GuiTranslator::eventFilter(QObject* watched, QEvent* event) {
     case QEvent::ChildAdded:
     case QEvent::WindowTitleChange:
     case QEvent::ToolTipChange:
-    case QEvent::StatusTipChange:
         apply_to_object(watched);
         if (auto* widget = qobject_cast<QWidget*>(watched))
             apply_to_widget_tree(widget);
