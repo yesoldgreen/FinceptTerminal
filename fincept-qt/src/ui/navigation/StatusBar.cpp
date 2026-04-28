@@ -1,5 +1,6 @@
 #include "ui/navigation/StatusBar.h"
 
+#include "core/i18n/GuiTranslator.h"
 #include "ui/theme/Theme.h"
 #include "ui/theme/ThemeManager.h"
 
@@ -19,7 +20,7 @@ StatusBar::StatusBar(QWidget* parent) : QWidget(parent) {
         return l;
     };
 
-    hl->addWidget(mk("v4.0.2", "sbVersion"));
+    hl->addWidget(mk("v4.0.3", "sbVersion"));
     hl->addWidget(mk("  |  ", "sbSep"));
     const char* feeds[] = {"EQ", "FX", "CM", "FI", "CR"};
     for (auto& f : feeds) {
@@ -49,7 +50,7 @@ void StatusBar::refresh_theme() {
 }
 
 void StatusBar::set_ready(bool ready) {
-    ready_label_->setText(ready ? "READY" : "BUSY");
+    ready_label_->setText(i18n::GuiTranslator::instance().translate_text(ready ? "READY" : "BUSY"));
     ready_label_->setStyleSheet(QString("color:%1;font-weight:700;background:transparent;")
                                     .arg(ready ? colors::POSITIVE() : colors::TEXT_TERTIARY()));
 }

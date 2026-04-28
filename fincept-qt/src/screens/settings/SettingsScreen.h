@@ -61,6 +61,7 @@ class SettingsScreen : public QWidget, public IStatefulScreen {
     // ── Appearance state ──────────────────────────────────────────────────────
     QComboBox* app_font_size_ = nullptr;
     QComboBox* app_font_family_ = nullptr;
+    QComboBox* app_language_ = nullptr;
     QComboBox* app_density_ = nullptr;
     QCheckBox* chat_bubble_toggle_ = nullptr;
     QCheckBox* ticker_bar_toggle_ = nullptr;

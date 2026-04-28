@@ -7,6 +7,7 @@
 #include "auth/InactivityGuard.h"
 #include "auth/PinManager.h"
 #include "core/config/ProfileManager.h"
+#include "core/i18n/GuiTranslator.h"
 #include "core/events/EventBus.h"
 #include "core/keys/KeyConfigManager.h"
 #include "core/keys/WindowCycler.h"
@@ -212,6 +213,9 @@ MainWindow::MainWindow(int window_id, QWidget* parent) : QMainWindow(parent), wi
     always_on_top_ = SessionManager::instance().load_window_flag(window_id_, "always_on_top", false);
     if (always_on_top_)
         setWindowFlags(windowFlags() | Qt::WindowStaysOnTopHint);
+
+    connect(&i18n::GuiTranslator::instance(), &i18n::GuiTranslator::language_changed, this,
+            [this](const QString&) { update_window_title(); });
 
     auto* master_stack = new QStackedWidget;
 

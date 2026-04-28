@@ -7,6 +7,7 @@
 #include "core/config/AppConfig.h"
 #include "core/config/AppPaths.h"
 #include "core/config/ProfileManager.h"
+#include "core/i18n/GuiTranslator.h"
 #include "core/components/ComponentCatalog.h"
 #include "core/crash/CrashHandler.h"
 #include "core/keys/KeyConfigManager.h"
@@ -108,6 +109,7 @@ int main(int argc, char* argv[]) {
 #    define FINCEPT_VERSION_STRING "0.0.0-dev"
 #endif
     app.setApplicationVersion(QStringLiteral(FINCEPT_VERSION_STRING));
+    fincept::i18n::GuiTranslator::instance().initialize(&app);
 
     // ── Secondary instance: signal primary to open a new window, then exit ───
     // The primary receives receivedMessage() and calls open_new_window().
@@ -284,7 +286,7 @@ int main(int argc, char* argv[]) {
                 log.set_tag_level(tag, lvl_map.value(level));
         }
     }
-    LOG_INFO("App", "Fincept Terminal v4.0.2 starting...");
+    LOG_INFO("App", "Fincept Terminal v4.0.3 starting...");
 
     // Theme is applied after DB is open so saved font/theme are respected from the start.
 
@@ -406,6 +408,8 @@ int main(int argc, char* argv[]) {
             }
         }
     }
+
+    fincept::i18n::GuiTranslator::instance().apply_saved_language();
 
     LOG_INFO("App", "Starting session manager...");
     // Start session

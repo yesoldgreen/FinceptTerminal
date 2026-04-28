@@ -11,6 +11,7 @@
 #include "core/config/AppPaths.h"
 #include "core/config/ProfileManager.h"
 #include "core/events/EventBus.h"
+#include "core/i18n/GuiTranslator.h"
 #include "core/logging/Logger.h"
 #include "core/session/ScreenStateManager.h"
 #include "screens/devtools/DataHubInspector.h"
@@ -458,6 +459,22 @@ QWidget* SettingsScreen::build_appearance() {
     vl->setContentsMargins(24, 24, 24, 24);
     vl->setSpacing(8);
 
+    auto* l = new QLabel("LOCALIZATION");
+    l->setStyleSheet(section_title_ss());
+    vl->addWidget(l);
+    vl->addWidget(make_sep());
+    vl->addSpacing(8);
+
+    app_language_ = new QComboBox;
+    app_language_->addItem("English", "en");
+    app_language_->addItem("简体中文", "zh_CN");
+    app_language_->setStyleSheet(combo_ss());
+    vl->addWidget(make_row("Display Language", app_language_, "Change display language for the interface."));
+
+    vl->addSpacing(8);
+    vl->addWidget(make_sep());
+    vl->addSpacing(8);
+
     // ── TYPOGRAPHY ────────────────────────────────────────────────────────────
     auto* t = new QLabel("TYPOGRAPHY");
     t->setStyleSheet(section_title_ss());
@@ -551,6 +568,7 @@ QWidget* SettingsScreen::build_appearance() {
         // Persist all values
         repo.set("appearance.font_size", app_font_size_->currentText(), "appearance");
         repo.set("appearance.font_family", app_font_family_->currentText(), "appearance");
+        repo.set("appearance.language", app_language_ ? app_language_->currentData().toString() : "en", "appearance");
         repo.set("appearance.density", app_density_->currentText(), "appearance");
         repo.set("appearance.show_chat_bubble", chat_bubble_toggle_->isChecked() ? "true" : "false", "appearance");
         repo.set("appearance.show_ticker_bar", ticker_bar_toggle_->isChecked() ? "true" : "false", "appearance");
@@ -565,6 +583,9 @@ QWidget* SettingsScreen::build_appearance() {
             tm.apply_font(app_font_family_->currentText(), px);
             tm.apply_density(app_density_->currentText());
         }
+
+        i18n::GuiTranslator::instance().set_language_code(
+            app_language_ ? app_language_->currentData().toString() : QStringLiteral("en"));
 
         LOG_INFO("Settings", "Appearance saved and applied");
     });
@@ -585,6 +606,7 @@ void SettingsScreen::load_appearance() {
     // the associated theme_changed signal re-rendering every widget on screen.
     const QSignalBlocker b1(app_font_size_);
     const QSignalBlocker b2(app_font_family_);
+    const QSignalBlocker b3(app_language_);
     const QSignalBlocker b4(app_density_);
 
     auto load_combo = [&](QComboBox* cb, const QString& key, const QString& def) {
@@ -604,6 +626,13 @@ void SettingsScreen::load_appearance() {
 
     load_combo(app_font_size_, "appearance.font_size", kDefaultFontSize);
     load_combo(app_font_family_, "appearance.font_family", kDefaultFontFamily);
+    if (app_language_) {
+        auto r = repo.get("appearance.language", "en");
+        const QString lang = r.is_ok() ? r.value() : "en";
+        const int idx = app_language_->findData(lang.startsWith("zh", Qt::CaseInsensitive) ? "zh_CN" : "en");
+        if (idx >= 0)
+            app_language_->setCurrentIndex(idx);
+    }
     load_combo(app_density_, "appearance.density", kDefaultDensity);
 
     load_check(chat_bubble_toggle_, "appearance.show_chat_bubble", true);

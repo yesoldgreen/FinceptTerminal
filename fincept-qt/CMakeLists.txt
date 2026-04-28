@@ -23,7 +23,7 @@ if(WIN32 AND CMAKE_HOST_WIN32)
     endif()
 endif()
 
-project(FinceptTerminal VERSION 4.0.2 LANGUAGES CXX)
+project(FinceptTerminal VERSION 4.0.3 LANGUAGES CXX)
 
 # Strip C/C++ flags out of RC invocations — rc.exe only understands /D, /I, /fo.
 if(WIN32)
@@ -467,6 +467,7 @@ set(CORE_SOURCES
     src/core/config/AppConfig.cpp
     src/core/config/AppPaths.cpp
     src/core/config/ProfileManager.cpp
+    src/core/i18n/GuiTranslator.cpp
     src/core/logging/Logger.cpp
     src/core/events/EventBus.cpp
     src/core/session/SessionManager.cpp
