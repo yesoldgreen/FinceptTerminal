@@ -13,6 +13,7 @@
 #include <QLineEdit>
 #include <QListWidget>
 #include <QMenu>
+#include <QScopedValueRollback>
 #include <QTabBar>
 #include <QTableWidget>
 #include <QTreeWidget>
@@ -311,7 +312,7 @@ QString GuiTranslator::translate_text(const QString& text) const {
 }
 
 bool GuiTranslator::eventFilter(QObject* watched, QEvent* event) {
-    if (!initialized_ || !watched || !event)
+    if (!initialized_ || !watched || !event || applying_)
         return QObject::eventFilter(watched, event);
 
     switch (event->type()) {
@@ -332,9 +333,10 @@ bool GuiTranslator::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void GuiTranslator::apply_to_top_level_widgets() {
-    if (!app_)
+    if (!app_ || applying_)
         return;
 
+    QScopedValueRollback<bool> guard(applying_, true);
     for (QWidget* widget : app_->topLevelWidgets()) {
         if (!widget)
             continue;
@@ -360,23 +362,31 @@ void GuiTranslator::apply_to_object(QObject* object) {
 
     if (auto* label = qobject_cast<QLabel*>(object)) {
         const QString orig = stored_string(label, kOrigTextProp, label->text());
-        label->setText(zh ? translate_preserving_format(orig) : orig);
+        const QString target = zh ? translate_preserving_format(orig) : orig;
+        if (label->text() != target)
+            label->setText(target);
     }
 
     if (auto* button = qobject_cast<QAbstractButton*>(object)) {
         const QString orig = stored_string(button, kOrigTextProp, button->text());
-        button->setText(zh ? translate_preserving_format(orig) : orig);
+        const QString target = zh ? translate_preserving_format(orig) : orig;
+        if (button->text() != target)
+            button->setText(target);
     }
 
     if (auto* group = qobject_cast<QGroupBox*>(object)) {
         const QString orig = stored_string(group, kOrigTitleProp, group->title());
-        group->setTitle(zh ? translate_preserving_format(orig) : orig);
+        const QString target = zh ? translate_preserving_format(orig) : orig;
+        if (group->title() != target)
+            group->setTitle(target);
     }
 
     if (auto* line_edit = qobject_cast<QLineEdit*>(object)) {
         const QString orig_placeholder =
             stored_string(line_edit, kOrigPlaceholderProp, line_edit->placeholderText());
-        line_edit->setPlaceholderText(zh ? translate_preserving_format(orig_placeholder) : orig_placeholder);
+        const QString target = zh ? translate_preserving_format(orig_placeholder) : orig_placeholder;
+        if (line_edit->placeholderText() != target)
+            line_edit->setPlaceholderText(target);
     }
 
     if (auto* combo = qobject_cast<QComboBox*>(object)) {
@@ -411,7 +421,9 @@ void GuiTranslator::apply_to_object(QObject* object) {
 
     if (auto* menu = qobject_cast<QMenu*>(object)) {
         const QString orig_title = stored_string(menu, kOrigTitleProp, menu->title());
-        menu->setTitle(zh ? translate_preserving_format(orig_title) : orig_title);
+        const QString target = zh ? translate_preserving_format(orig_title) : orig_title;
+        if (menu->title() != target)
+            menu->setTitle(target);
         for (QAction* action : menu->actions())
             apply_action_translation(action, zh);
     }
@@ -445,13 +457,19 @@ void GuiTranslator::apply_to_object(QObject* object) {
 
     if (auto* widget = qobject_cast<QWidget*>(object)) {
         const QString orig_title = stored_string(widget, kOrigTitleProp, widget->windowTitle());
-        widget->setWindowTitle(zh ? translate_preserving_format(orig_title) : orig_title);
+        const QString target_title = zh ? translate_preserving_format(orig_title) : orig_title;
+        if (widget->windowTitle() != target_title)
+            widget->setWindowTitle(target_title);
 
         const QString orig_tooltip = stored_string(widget, kOrigTooltipProp, widget->toolTip());
-        widget->setToolTip(zh ? translate_preserving_format(orig_tooltip) : orig_tooltip);
+        const QString target_tooltip = zh ? translate_preserving_format(orig_tooltip) : orig_tooltip;
+        if (widget->toolTip() != target_tooltip)
+            widget->setToolTip(target_tooltip);
 
         const QString orig_status_tip = stored_string(widget, kOrigStatusTipProp, widget->statusTip());
-        widget->setStatusTip(zh ? translate_preserving_format(orig_status_tip) : orig_status_tip);
+        const QString target_status_tip = zh ? translate_preserving_format(orig_status_tip) : orig_status_tip;
+        if (widget->statusTip() != target_status_tip)
+            widget->setStatusTip(target_status_tip);
 
         for (QAction* action : widget->actions())
             apply_action_translation(action, zh);

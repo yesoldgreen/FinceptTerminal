@@ -39,6 +39,7 @@ class GuiTranslator : public QObject {
     QApplication* app_ = nullptr;
     QString language_code_ = "en";
     bool initialized_ = false;
+    bool applying_ = false;
 };
 
 } // namespace fincept::i18n
