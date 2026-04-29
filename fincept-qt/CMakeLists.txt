@@ -161,6 +161,7 @@ add_compile_definitions(NOMINMAX WIN32_LEAN_AND_MEAN)
 # -DFINCEPT_BUILD_TESTS=ON to compile the Qt Test executables under
 # fincept-qt/tests/. Run via `ctest` in the build directory.
 option(FINCEPT_BUILD_TESTS "Build the Fincept Terminal test suite" OFF)
+option(FINCEPT_ENABLE_TTS "Enable optional Qt TextToSpeech integration" ON)
 
 # ── Qt packages ──────────────────────────────────────────────────────────────
 # Qt is pinned to 6.8.3 across all platforms. Releases must build
@@ -211,9 +212,11 @@ if(Qt6MultimediaWidgets_FOUND)
 endif()
 
 # Optional: TextToSpeech (cross-platform TTS — SAPI/AVSpeech/speech-dispatcher)
-find_package(Qt6 ${FINCEPT_QT_VERSION} EXACT QUIET COMPONENTS TextToSpeech)
-if(Qt6TextToSpeech_FOUND)
-    set(HAS_TTS TRUE)
+if(FINCEPT_ENABLE_TTS)
+    find_package(Qt6 ${FINCEPT_QT_VERSION} EXACT QUIET COMPONENTS TextToSpeech)
+    if(Qt6TextToSpeech_FOUND)
+        set(HAS_TTS TRUE)
+    endif()
 endif()
 
 # macOS 14+ / Xcode 15+ removes the AGL framework. Qt6's WrapOpenGL target (pulled in
@@ -417,12 +420,15 @@ FetchContent_MakeAvailable(SingleApplication)
 # ── Patch SingleApplication for Qt 6.8 QSharedMemory compat ────────────────────
 # Qt 6.8 changed the default QSharedMemory backend to PosixRealtime, but macOS's
 # shm_open rejects the keys that SingleApplication generates ("bad name").
-# Fix: use SystemV type which works on macOS (and Linux) with Qt 6.6+.
+# Fix: use a platform-safe SystemV key instead of the raw base64 string.
+# Qt 6.8 validates the companion semaphore key too; passing the raw
+# blockServerName to setNativeKey() still fails on macOS with
+# QSystemSemaphore::handle "unable to make key".
 if(UNIX)
     file(READ ${SingleApplication_SOURCE_DIR}/singleapplication.cpp _sa_src)
     string(REPLACE
         "d->memory = new QSharedMemory( QNativeIpcKey( d->blockServerName ) );"
-        "d->memory = new QSharedMemory(); d->memory->setNativeKey(d->blockServerName, QNativeIpcKey::Type::SystemV);"
+        "d->memory = new QSharedMemory(QSharedMemory::platformSafeKey(d->blockServerName, QNativeIpcKey::Type::SystemV));"
         _sa_src "${_sa_src}")
     file(WRITE ${SingleApplication_SOURCE_DIR}/singleapplication.cpp "${_sa_src}")
 endif()
